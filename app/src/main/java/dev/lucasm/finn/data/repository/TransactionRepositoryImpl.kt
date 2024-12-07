@@ -22,23 +22,16 @@ class TransactionRepositoryImpl @Inject constructor(
         return transactionsDao.removeTransaction(transaction)
     }
 
-    override suspend fun filterByIncomes(): Flow<List<Transaction>> {
-        return transactionsDao.filterByIncomes()
-    }
-
-    override suspend fun filterByExpenses(): Flow<List<Transaction>> {
-        return transactionsDao.filterByExpenses()
-    }
-
-    override suspend fun getTotalIncome(): Double {
+    override fun getTotalIncome(): Double {
         return transactionsDao.getTotalIncome()
     }
 
-    override suspend fun getTotalExpense(): Double {
+    override fun getTotalExpense(): Double {
         return transactionsDao.getTotalExpense()
     }
 
-    override suspend fun getTotalBalance(): Double {
+    override fun getTotalBalance(): Double {
         return transactionsDao.getTotalBalance()
     }
+
 }

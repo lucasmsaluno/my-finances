@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TransactionsDao {
+
     @Query("SELECT * FROM transactions")
     fun getAllTransactions (): Flow<List<Transaction>>
 
@@ -19,23 +20,14 @@ interface TransactionsDao {
     suspend fun removeTransaction(transaction: Transaction)
 
     @Query("SELECT SUM(price) FROM transactions WHERE type = 'income'")
-    suspend fun getTotalIncome(): Double
+    fun getTotalIncome(): Double
 
     @Query("SELECT SUM(price) FROM transactions WHERE type = 'expense'")
-    suspend fun getTotalExpense(): Double
+    fun getTotalExpense(): Double
 
-    @Query("SELECT * FROM transactions WHERE type = 'income'")
-    suspend fun filterByIncomes(): Flow<List<Transaction>>
+    @Query("SELECT (SELECT SUM(price) FROM transactions WHERE type = 'income') " +
+            "- " +
+            "(SELECT SUM(price) FROM transactions WHERE type = 'expension')")
+    fun getTotalBalance(): Double
 
-    @Query("SELECT * FROM transactions WHERE type = 'expense'")
-    suspend fun filterByExpenses(): Flow<List<Transaction>>
-
-    @Query(
-        """
-        SELECT 
-            (SELECT COALESCE(SUM(price), 0) FROM transactions WHERE type = 'income') - 
-            (SELECT COALESCE(SUM(price), 0) FROM transactions WHERE type = 'expense') 
-        """
-    )
-    suspend fun getTotalBalance(): Double
 }

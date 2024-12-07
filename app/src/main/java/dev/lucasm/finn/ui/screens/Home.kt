@@ -23,11 +23,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Settings
@@ -54,8 +57,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -65,6 +70,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -73,6 +79,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import dev.lucasm.finn.R
 import dev.lucasm.finn.navigation.Screens
 import dev.lucasm.finn.ui.components.CustomDropdownMenu
 import dev.lucasm.finn.ui.components.TransactionCard
@@ -83,7 +90,8 @@ import dev.lucasm.finn.viewmodels.TransactionsViewModel
 @Composable
 fun Home(
     navController: NavController,
-    viewModel: TransactionsViewModel
+    viewModel: TransactionsViewModel,
+    isThemeButtonClicked: () -> Unit
 ) {
     val transactionsViewModel = viewModel.state.collectAsState()
 
@@ -103,6 +111,18 @@ fun Home(
                 },
                 actions = {
                     Button(
+                        onClick = { isThemeButtonClicked() },
+                        colors = ButtonDefaults.buttonColors(
+                            contentColor = Color.White,
+                            containerColor = Color.Transparent
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.baseline_sunny_24),
+                            contentDescription = null,
+                        )
+                    }
+                    Button(
                         onClick = {
                             navController.navigate(Screens.TransactionScreen)
                         },
@@ -112,7 +132,10 @@ fun Home(
                         ),
                         shape = RoundedCornerShape(5.dp)
                     ) {
-                        Text("New Transaction")
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = null,
+                        )
                     }
                 },
             )
@@ -164,7 +187,7 @@ fun Home(
                             }
                             Spacer(modifier = Modifier.height(20.dp))
                             Text(
-                                "R$${transactionsViewModel.value.incomes}",
+                                "$${transactionsViewModel.value.incomes}",
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 fontWeight = FontWeight.Bold,
                                 fontFamily = NunitoFontFamily,
@@ -230,7 +253,7 @@ fun Home(
                             }
                             Spacer(modifier = Modifier.height(20.dp))
                             Text(
-                                "R$${transactionsViewModel.value.expenses}",
+                                "$ ${transactionsViewModel.value.total}",
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 fontWeight = FontWeight.Bold,
                                 fontFamily = NunitoFontFamily,
@@ -262,23 +285,30 @@ fun Home(
                 }
                 Spacer(modifier = Modifier.size(20.dp))
                 LazyColumn {
-                    items(transactionsViewModel.value.transactions) { transaction ->
-                        val dismissState = rememberSwipeToDismissBoxState(
-                            confirmValueChange = {
-                                if (it == SwipeToDismissBoxValue.EndToStart) {
-                                    viewModel.removeTransaction(transaction)
-                                    true
+                    items(
+                        transactionsViewModel.value.transactions,
+                        key = { it.id }
+                    ) { transaction ->
+                        val dismissState = rememberSwipeToDismissBoxState()
 
-                                } else {
-                                    false
-                                }
+                        LaunchedEffect(dismissState.currentValue) {
+                            if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+                                viewModel.removeTransaction(transaction)
                             }
-                        )
+                        }
+
                         SwipeToDismissBox(
                             state = dismissState,
+                            enableDismissFromStartToEnd = false,
                             backgroundContent = {
-                                Box(){
-                                    Text("Delete")
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(150.dp)
+                                        .background(Color.Transparent),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("Remove", color = Color.Transparent)
                                 }
                             }
                         ) {
@@ -286,6 +316,7 @@ fun Home(
                                 transaction = transaction,
                             )
                         }
+
                         Spacer(modifier = Modifier.size(20.dp))
                     }
                 }

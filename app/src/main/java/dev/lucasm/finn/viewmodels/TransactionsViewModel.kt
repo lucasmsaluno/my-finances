@@ -2,115 +2,100 @@ package dev.lucasm.finn.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.lucasm.finn.data.model.Transaction
 import dev.lucasm.finn.data.repository.TransactionsRepository
-import dev.lucasm.finn.ui.utils.Filter
+import dev.lucasm.finn.utils.Filter
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class TransactionsViewModel @Inject constructor(
     private val repository: TransactionsRepository
-): ViewModel() {
+) : ViewModel() {
+
     private val _state = MutableStateFlow(TransactionsUiState())
     val state = _state.asStateFlow()
 
-    fun filterTransactions(filter: Filter): Job{
-        return when (filter) {
-            is Filter.All -> {
-                viewModelScope.launch (Dispatchers.IO) {
-                    _state.value = _state.value.copy(
-                        isLoading = true
-                    )
+    init {
+        getAllTrancactions()
+    }
 
-                    repository.getAllTransactions().collect { listOfTransactions ->
-                        _state.value = _state.value.copy(
-                            isLoading = false,
-                            transactions = listOfTransactions
-                        )
-                    }
-                }
-            }
-
-            Filter.Expenses -> {
-                viewModelScope.launch (Dispatchers.IO) {
-                    _state.value = _state.value.copy(
-                        isLoading = true
-                    )
-
-                    repository.filterByExpenses().collect { listOfExpenses ->
-                        _state.value = _state.value.copy(
-                            isLoading = false,
-                            transactions = listOfExpenses
-                        )
-                    }
-                }
-            }
-            Filter.Incomes -> {
-                viewModelScope.launch (Dispatchers.IO) {
-                    _state.value = _state.value.copy(
-                        isLoading = true
-                    )
-
-                    repository.filterByExpenses().collect { listOfExpenses ->
-                        _state.value = _state.value.copy(
-                            isLoading = false,
-                            transactions = listOfExpenses
-                        )
-                    }
-                }
-            }
+    fun onFilter (filter: Filter) {
+        when (filter) {
+            is Filter.All -> getAllTrancactions()
+            Filter.Expenses -> getExpenses()
+            Filter.Incomes -> getIncomes()
         }
     }
 
-    init {
-        viewModelScope.launch (Dispatchers.IO) {
-            _state.value = _state.value.copy(
-                isLoading = true
-            )
+    fun getAllTrancactions () {
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.value = _state.value.copy(isLoading = true)
 
             repository.getAllTransactions().collect { listOfTransactions ->
                 _state.value = _state.value.copy(
                     isLoading = false,
                     transactions = listOfTransactions
                 )
+
+                updateSums(listOfTransactions)
             }
-
-            updateTotals()
         }
     }
 
-    private fun updateTotals () {
-        viewModelScope.launch {
-            val totalIncomes = repository.getTotalIncome()
-            val totalExpenses = repository.getTotalExpense()
-            val totalBalance = repository.getTotalBalance()
+    private fun getIncomes () {
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.value = _state.value.copy(isLoading = true)
 
-            _state.value = _state.value.copy(
-                incomes = totalIncomes,
-                expenses = totalExpenses,
-                total = totalBalance
-            )
+            repository.getAllTransactions().collect { listOfTransactions ->
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    transactions = listOfTransactions.filter { it.type == "income" }
+                )
+            }
         }
     }
 
-    fun insertTransaction (transaction: Transaction) {
-        viewModelScope.launch {
+    private fun getExpenses () {
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.value = _state.value.copy(isLoading = true)
+
+            repository.getAllTransactions().collect { listOfTransactions ->
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    transactions = listOfTransactions.filter { it.type == "expense" }
+                )
+            }
+        }
+    }
+
+    fun insertTransaction(transaction: Transaction) {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.insertTransaction(transaction)
-            updateTotals()
         }
     }
 
-    fun removeTransaction (transaction: Transaction) {
+    fun removeTransaction(transaction: Transaction) {
         viewModelScope.launch {
             repository.removeTransaction(transaction)
-            updateTotals()
         }
     }
+
+    private fun updateSums(transactions: List<Transaction>) {
+        val incomes = transactions.filter { it.type == "income" }.sumOf { it.price }
+        val expenses = transactions.filter { it.type == "expense" }.sumOf { it.price }
+        val total = incomes - expenses
+
+        _state.value = _state.value.copy(
+            incomes = incomes,
+            expenses = expenses,
+            total = total
+        )
+    }
 }
+

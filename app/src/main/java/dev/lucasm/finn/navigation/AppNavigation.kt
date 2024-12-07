@@ -11,12 +11,19 @@ import dev.lucasm.finn.viewmodels.TransactionsViewModel
 
 @Composable
 fun AppNavigation (
-    viewModel: TransactionsViewModel
+    viewModel: TransactionsViewModel,
+    isThemeButtonClicked: () -> Unit
 ) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = Screens.HomeScreen) {
-        composable<Screens.HomeScreen> { Home(navController = navController, viewModel = viewModel) }
+        composable<Screens.HomeScreen> {
+            Home(
+                navController = navController,
+                viewModel = viewModel,
+                isThemeButtonClicked = isThemeButtonClicked
+            )
+        }
         composable<Screens.TransactionScreen> { Transaction(navController = navController, viewModel = viewModel) }
     }
 }

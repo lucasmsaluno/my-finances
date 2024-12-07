@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import dev.lucasm.finn.utils.Filter
 import dev.lucasm.finn.viewmodels.TransactionsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,7 +34,7 @@ fun CustomDropdownMenu (
     val context = LocalContext.current
     val coffeeDrinks = arrayOf("All", "Incomes", "Expenses")
     var expanded by remember { mutableStateOf(false) }
-    var selectedText by remember { mutableStateOf("") }
+    var selectedText by remember { mutableStateOf("All") }
 
     Box(
         modifier = Modifier
@@ -64,6 +65,11 @@ fun CustomDropdownMenu (
                         onClick = {
                             selectedText = item
                             expanded = false
+                            when (selectedText) {
+                                "All" -> viewModel.onFilter(Filter.All)
+                                "Incomes" -> viewModel.onFilter(Filter.Incomes)
+                                "Expenses" -> viewModel.onFilter(Filter.Expenses)
+                            }
                         },
                     )
                 }

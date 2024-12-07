@@ -2,7 +2,7 @@ package dev.lucasm.finn.viewmodels
 
 import dev.lucasm.finn.data.model.Transaction
 
-data class TransactionsUiState (
+data class TransactionsUiState(
     val transactions: List<Transaction> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String = "",

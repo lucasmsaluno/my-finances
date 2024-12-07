@@ -4,6 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dagger.hilt.android.AndroidEntryPoint
 import dev.lucasm.finn.navigation.AppNavigation
@@ -16,9 +20,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            FinnTheme{
+            var isDarkTheme by remember { mutableStateOf(true) }
+
+            FinnTheme (darkTheme = isDarkTheme) {
                 val viewModel = viewModel<TransactionsViewModel>()
-                AppNavigation(viewModel = viewModel)
+                AppNavigation(
+                    viewModel = viewModel,
+                    isThemeButtonClicked = {
+                        isDarkTheme = !isDarkTheme
+                    }
+                )
             }
         }
     }

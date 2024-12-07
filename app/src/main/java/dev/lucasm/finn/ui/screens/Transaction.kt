@@ -57,6 +57,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import dev.lucasm.finn.utils.Filter
 import dev.lucasm.finn.viewmodels.TransactionsViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -70,9 +71,11 @@ fun Transaction(
     viewModel: TransactionsViewModel
 ) {
     var titleInput by remember { mutableStateOf("") }
-    var priceInput by remember { mutableStateOf("") } // Armazena o valor como texto para validação
+    var priceInput by remember { mutableStateOf("") }
     var selectedOption by remember { mutableStateOf("income") }
-    var showErrorDialog by remember { mutableStateOf(false) } // Controle do diálogo de erro
+
+    // States for date picker
+    var showErrorDialog by remember { mutableStateOf(false) }
     var showDatePickerDialog by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
     var selectedDate by remember { mutableStateOf("") }
@@ -103,7 +106,7 @@ fun Transaction(
                 .padding(top = innerPadding.calculateTopPadding() + 30.dp, start = 20.dp, end = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Nome da transação
+
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = titleInput,
@@ -117,12 +120,11 @@ fun Transaction(
 
             Spacer(modifier = Modifier.size(20.dp))
 
-            // Valor da transação
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = priceInput,
                 onValueChange = { input ->
-                    priceInput = input.filter { it.isDigit() || it == '.' } // Permite apenas números e ponto
+                    priceInput = input.filter { it.isDigit() || it == '.' }
                 },
                 label = { Text("Transaction Amount") },
                 keyboardOptions = KeyboardOptions(
@@ -133,7 +135,6 @@ fun Transaction(
 
             Spacer(modifier = Modifier.size(30.dp))
 
-            // Tipo de transação (Income ou Expense)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -172,7 +173,7 @@ fun Transaction(
 
             Spacer(modifier = Modifier.size(30.dp))
 
-            // Seleção de data
+            // Open date picker dialog
             if (showDatePickerDialog) {
                 DatePickerDialog(
                     onDismissRequest = { showDatePickerDialog = false },
@@ -211,12 +212,15 @@ fun Transaction(
 
             Spacer(modifier = Modifier.size(30.dp))
 
-            // Botão para adicionar transação
             Button(
                 onClick = {
+                    // Form validation
                     if (titleInput.isBlank() || priceInput.isBlank() || selectedDate.isBlank()) {
                         showErrorDialog = true
                     } else {
+                        // Restarting filter to avoid bugs
+                        viewModel.getAllTrancactions()
+
                         viewModel.insertTransaction(
                             Transaction(
                                 title = titleInput,
@@ -238,7 +242,6 @@ fun Transaction(
                 Text("Add Transaction")
             }
 
-            // Diálogo de erro
             if (showErrorDialog) {
                 AlertDialog(
                     onDismissRequest = { showErrorDialog = false },
@@ -255,6 +258,7 @@ fun Transaction(
     }
 }
 
+// Function to formate date
 fun Long.toBrazilianDateFormat(pattern: String = "dd/MM/yyyy"): String {
     val date = Date(this)
     val formatter = SimpleDateFormat(pattern, Locale("pt-br")).apply {
