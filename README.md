@@ -34,7 +34,8 @@ A Expense Tracking Application made with jetpack compose. I made this app with t
   
 - Kotlin
 - Jetpack Compose
-- Android Studio
+- Room Database
+- Dagger Hilt
 
 </div>
 
